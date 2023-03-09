@@ -1,0 +1,2 @@
+let main = let greeting = "Hello, world!" in print greeting
+
