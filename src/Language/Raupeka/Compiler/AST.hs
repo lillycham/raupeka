@@ -1,8 +1,8 @@
-module Language.Raupeka.AST ( RLit   (..)
-                            , RType  (..)
-                            , RTySig (..)
-                            , RExpr  (..)
-                            , Binop (..)) where
+module Language.Raupeka.Compiler.AST ( RLit   (..)
+                                     , RType  (..)
+                                     , RTySig (..)
+                                     , RExpr  (..)
+                                     , Binop  (..)) where
 
 import Language.Raupeka.Types (Name)
 import Data.Text (Text)
@@ -47,7 +47,5 @@ data Binop
   | Gte
   | Lse
   | Cmp
+  | Map
   deriving (Eq, Ord, Show)
-  
-  
-  

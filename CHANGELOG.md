@@ -1,4 +1,4 @@
-# Changelog for `lang`
+# Changelog for `raupeka`
 
 All notable changes to this project will be documented in this file.
 
@@ -8,4 +8,4 @@ and this project adheres to the
 
 ## Unreleased
 
-## 0.1.0.0 - YYYY-MM-DD
+## 0.1.0.0 - 2023-03-22

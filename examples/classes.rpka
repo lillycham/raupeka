@@ -1,0 +1,9 @@
+class Functor f where
+	map   : (a -> b) -> f a -> f b
+	(<$>) = map
+	(<$)  = const . map
+	(<&>) = flip map
+
+inst Functor [] where
+	map  = map
+	(<$) = const . map

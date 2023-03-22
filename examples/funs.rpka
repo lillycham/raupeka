@@ -1,0 +1,3 @@
+let mul n = n * 10;
+let multwice = mul . mul;
+let main = putStrLn (show (multwice 10));

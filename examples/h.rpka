@@ -1,0 +1,2 @@
+let foo = 10;
+let main = print "Hello, World!";

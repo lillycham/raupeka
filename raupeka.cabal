@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.1.
+-- This file has been generated from package.yaml by hpack version 0.35.2.
 --
 -- see: https://github.com/sol/hpack
 
@@ -25,14 +25,17 @@ source-repository head
 
 library
   exposed-modules:
-      Language.Raupeka.AST
-      Language.Raupeka.Debug
-      Language.Raupeka.Desugar
-      Language.Raupeka.File
-      Language.Raupeka.Parser
-      Language.Raupeka.Repl
-      Language.Raupeka.SKICompiler
-      Language.Raupeka.TypeCheck
+      Language.Raupeka.CLI.File
+      Language.Raupeka.CLI.Repl
+      Language.Raupeka.CLI.Shared
+      Language.Raupeka.Compiler.AST
+      Language.Raupeka.Compiler.Desugar
+      Language.Raupeka.Compiler.Parser
+      Language.Raupeka.Compiler.Parser.Typing
+      Language.Raupeka.Compiler.SKI
+      Language.Raupeka.Pretty
+      Language.Raupeka.Type.Checker
+      Language.Raupeka.Type.Pretty
       Language.Raupeka.Types
   other-modules:
       Paths_raupeka
@@ -52,9 +55,11 @@ library
     , deepseq
     , lens
     , megaparsec
+    , mtl
     , optparse-applicative
     , parser-combinators
     , text
+    , transformers
     , unix
   default-language: Haskell2010
 
@@ -78,10 +83,12 @@ executable raupeka-exe
     , deepseq
     , lens
     , megaparsec
+    , mtl
     , optparse-applicative
     , parser-combinators
     , raupeka
     , text
+    , transformers
     , unix
   default-language: Haskell2010
 
@@ -106,9 +113,11 @@ test-suite raupeka-test
     , deepseq
     , lens
     , megaparsec
+    , mtl
     , optparse-applicative
     , parser-combinators
     , raupeka
     , text
+    , transformers
     , unix
   default-language: Haskell2010
