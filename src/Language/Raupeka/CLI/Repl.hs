@@ -18,7 +18,7 @@ import Language.Raupeka.Compiler.Parser
 import Language.Raupeka.Compiler.SKI
 import Language.Raupeka.Pretty (rpretty)
 import Language.Raupeka.Type.Checker
-import Language.Raupeka.Type.Pretty
+import Language.Raupeka.Type.Pretty ()
 import System.Exit (exitSuccess)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, stdout)
 import System.IO.Error (isEOFError)
@@ -62,6 +62,7 @@ data REPLCommand
   | Desugar Text
   | Compile Text
   | Unknown Text
+  | Kind Text
   deriving (Eq, Show, Read)
 
 cmdPrefix :: Text -> REPLCommand
@@ -69,6 +70,7 @@ cmdPrefix (T.stripPrefix ":q" -> Just _) = Quit
 cmdPrefix (T.stripPrefix ":a " -> Just e) = Desugar e
 cmdPrefix (T.stripPrefix ":s " -> Just e) = Compile e
 cmdPrefix (T.stripPrefix ":t " -> Just e) = Typecheck e
+cmdPrefix (T.stripPrefix ":k " -> Just e) = Kind e
 cmdPrefix (T.stripPrefix ":e" -> Just _) = ShowEnv
 cmdPrefix e@(T.stripPrefix ":" -> Just _) = Unknown e
 cmdPrefix e = Eval e
@@ -92,11 +94,11 @@ repl' =
                   Typecheck i ->
                     handleParseErrors (parseExprs file i) handle \es ->
                       handleTypeErrors (inferRExpr tyEnv es) handle (output' . rpretty)
+                  Kind i -> handleParseErrors (parseExprs file i) handle \es ->
+                    handleTypeErrors (inferRExprKind tyEnv es) handle (output' . rpretty)
                   -- Default case: evaluate the input and print the result
                   Eval i ->
-                    handleParseErrors (parseExprs file i) handle \es ->
-                      handleTypeErrors (inferRExpr tyEnv es) handle \ !_ ->
-                        outputShow $ eval env es
+                    handleParseErrors (parseExprs file i) handle \es -> outputShow $ eval env es
                   . cmdPrefix
               )
   where
@@ -118,7 +120,7 @@ repl =
   ( runRepl repl' emptyReplState >>= \case
       (_, rCont -> ShouldQuit) -> exitSuccess
       (_, rCont -> ShouldContinue) -> liftIO repl
-      _ -> error "Something has gone seriously wrong!"
+      _ -> error "panic: an unrecoverable state was reached. this is likely a compiler bug."
   )
     `catch` \e ->
       when (isEOFError e) exitSuccess

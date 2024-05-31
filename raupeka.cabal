@@ -33,8 +33,10 @@ library
       Language.Raupeka.Compiler.Parser
       Language.Raupeka.Compiler.Parser.Typing
       Language.Raupeka.Compiler.SKI
+      Language.Raupeka.Compiler.WASM
       Language.Raupeka.Pretty
       Language.Raupeka.Type.Checker
+      Language.Raupeka.Type.Kinds
       Language.Raupeka.Type.Pretty
       Language.Raupeka.Types
   other-modules:
@@ -53,6 +55,8 @@ library
     , bytestring
     , containers
     , deepseq
+    , deriving-compat
+    , free
     , lens
     , megaparsec
     , mtl
@@ -81,6 +85,8 @@ executable raupeka-exe
     , bytestring
     , containers
     , deepseq
+    , deriving-compat
+    , free
     , lens
     , megaparsec
     , mtl
@@ -111,6 +117,8 @@ test-suite raupeka-test
     , bytestring
     , containers
     , deepseq
+    , deriving-compat
+    , free
     , lens
     , megaparsec
     , mtl

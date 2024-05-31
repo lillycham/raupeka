@@ -59,9 +59,9 @@ compile (Lit (LInt k)) = CInt k
 compile (Lit (LBool k)) = CBool k
 compile (Lit (LStr k)) = CStr k
 compile (Lit (LList k)) = CList (compile <$> k)
-compile _ = error "Empty case - did you forget to desugar?"
+compile _ = error "panic: impossible state reached in compilation step [ast -> ski], file a bug report!"
 
--- | Abstract a CExpr into the SKI combinators
+-- | Compile a CExpr into the SKI combinator calculus, eliminating any free variables.
 abstract :: Name -> CExpr -> CExpr
 abstract x (CApp fun arg) = combS (abstract x fun) (abstract x arg)
 abstract x (CVar n) | x == n = combI
@@ -185,17 +185,17 @@ toHs (CVar "id") = "id"
 toHs (CVar "const") = "const"
 toHs (CVar "ap") = "(\\f -> \\g -> \\x -> f x (g x))"
 toHs (CVar "iff") = "(\\cond -> \\tr -> \\fl -> if cond then tr else fl)"
-toHs (CVar "$fix") = "(\\f -> fix f)"
-toHs (CVar "$compose") = "(\\f -> \\g -> \\x -> f (g x))"
-toHs (CVar "$add") = "(\\a -> \\b -> a + b)"
-toHs (CVar "$sub") = "(\\a -> \\b -> a - b)"
-toHs (CVar "$mul") = "(\\a -> \\b -> a * b)"
+toHs (CVar "fix") = "(\\f -> fix f)"
+toHs (CVar "compose") = "(\\f -> \\g -> \\x -> f (g x))"
+toHs (CVar "add") = "(\\a -> \\b -> a + b)"
+toHs (CVar "sub") = "(\\a -> \\b -> a - b)"
+toHs (CVar "mul") = "(\\a -> \\b -> a * b)"
 toHs (CVar "$eql") = "(\\a -> \\b -> a == b)"
 toHs (CVar "$gtr") = "(\\a -> \\b -> a > b)"
 toHs (CVar "$lss") = "(\\a -> \\b -> a < b)"
 toHs (CVar "$gte") = "(\\a -> \\b -> a >= b)"
 toHs (CVar "$lse") = "(\\a -> \\b -> a <= b)"
-toHs (CVar "$print") = "(\\x -> print x)"
+toHs (CVar "print") = "(\\x -> print x)"
 toHs (CVar n) = n
 toHs (CApp fun arg) = "(" ++ toHs fun ++ " " ++ toHs arg ++ ")"
 toHs (CBool b) = show b

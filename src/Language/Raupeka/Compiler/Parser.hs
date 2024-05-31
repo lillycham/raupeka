@@ -12,38 +12,39 @@ import Language.Raupeka.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import Text.Megaparsec.Char.Lexer qualified as L
+import Debug.Trace (traceM)
 
 type Parser = Parsec Void Text
 
 -- Lexing
 reservedNames :: [Text]
 reservedNames =
-  [ "let",
-    "in",
-    "fix",
-    "s",
-    "k",
-    "i",
-    "true",
-    "false",
-    "fix",
-    "if",
-    "then",
-    "else"
-  ]
+    [ "let"
+    , "in"
+    , "fix"
+    , "s"
+    , "k"
+    , "i"
+    , "true"
+    , "false"
+    , "fix"
+    , "if"
+    , "then"
+    , "else"
+    ]
 
 reservedOps :: [Text]
 reservedOps =
-  [ "->",
-    "→",
-    ":",
-    "\\",
-    "λ",
-    "+",
-    "*",
-    "-",
-    "="
-  ]
+    [ "->"
+    , "→"
+    , ":"
+    , "\\"
+    , "λ"
+    , "+"
+    , "*"
+    , "-"
+    , "="
+    ]
 
 rws :: [Text]
 rws = reservedNames <> reservedOps
@@ -101,7 +102,9 @@ identifier :: Parser Name
 identifier = (lexeme . try) (p >>= check)
   where
     p = (:) <$> letterChar <*> many identifierChar
-    check x = if T.pack x `elem` rws then fail $ show x <> " cannot be an identifier" else pure x
+    check x = if T.pack x `elem` rws 
+        then fail $ show x <> " cannot be an identifier" 
+        else pure x
 
 pInteger :: Parser RExpr
 pInteger = Lit . LInt <$> lexeme L.decimal
@@ -111,19 +114,19 @@ parens = between (symbol "(") (symbol ")")
 
 pTerm :: Parser RExpr
 pTerm =
-  choice
-    [ parens exprs,
-      lambdaExpr,
-      letIn,
-      ifThenElse,
-      pInteger,
-      pList,
-      pString,
-      pVar
-      -- , section
-      -- , leftSection
-      -- , rightSection
-    ]
+    choice
+        [ parens exprs
+        , lambdaExpr
+        , letIn
+        , ifThenElse
+        , pInteger
+        , pList
+        , pString
+        , pVar
+        -- , section
+        -- , leftSection
+        -- , rightSection
+        ]
 
 -- * Operators
 
@@ -136,20 +139,20 @@ postfix name f = Postfix (f <$ symbol name)
 
 operatorTable :: [[Operator Parser RExpr]]
 operatorTable =
-  [ [binary " " App],
-    [binary "." (Op Cmp)],
-    [binary "+" (Op Add)],
-    [binary "*" (Op Mul)],
-    [binary "-" (Op Sub)],
-    -- , [ binary "/"  (Op Div) ]
-    [binary "<$>" (Op Map)],
-    [binary "==" (Op Eql)],
-    [binary ">" (Op Gtr)],
-    [binary "<" (Op Lss)],
-    [binary ">=" (Op Gte)],
-    [binary "<=" (Op Lse)],
-    [binary "$" App]
-  ]
+    [ [binary " " App]
+    , [binary "." (Op Cmp)]
+    , [binary "+" (Op Add)]
+    , [binary "*" (Op Mul)]
+    , [binary "-" (Op Sub)]
+    , -- , [ binary "/"  (Op Div) ]
+      [binary "<$>" (Op Map)]
+    , [binary "==" (Op Eql)]
+    , [binary ">" (Op Gtr)]
+    , [binary "<" (Op Lss)]
+    , [binary ">=" (Op Gte)]
+    , [binary "<=" (Op Lse)]
+    , [binary "$" App]
+    ]
 
 binOps :: [Text]
 binOps = ["+", "-", "*", "/", ".", ">", "<", ">=", "<=", "==", "<$>"]
@@ -213,110 +216,113 @@ term = makeExprParser pTerm operatorTable
 
 -- If multiple terms are given, they are applied to each other from left to right.
 exprs :: Parser RExpr
--- don't allow "let", or "in" as a variable name
--- an expression also ends when a ; is encountered
-exprs = foldl1 App <$> some term <* optional (symbol ";")
+exprs = foldl1 App <$> some term <* optional semi
 
 -- parser for lambda expr
 lambdaExpr :: Parser RExpr
 lambdaExpr = do
-  _ <- symbol "\\" <|> symbol "λ"
-  args <- some identifier
-  _ <- symbol "->"
-  body <- exprs
-  pure $ foldr Lam body args
+    _ <- symbol "\\" <|> symbol "λ"
+    args <- some identifier
+    _ <- symbol "->"
+    body <- exprs
+    pure $ foldr Lam body args
 
--- let expr parser
--- let name = expr in expr'
+-- | Let expression parser
+--  parses expressions in form `let id = expr in expr'`
 letIn :: Parser RExpr
 letIn = do
-  _ <- symbol "let"
-  name <- identifier
-  _ <- symbol "="
-  expr <- exprs
-  _ <- symbol "in"
-  Let name expr <$> exprs
+    _ <- symbol "let"
+    name <- identifier
+    _ <- symbol "="
+    expr <- exprs
+    _ <- symbol "in"
+    Let name expr <$> exprs
 
 type Binding = (Name, RExpr)
 
 -- parser for boolean literals
 boolean :: Parser RExpr
 boolean =
-  choice
-    [ symbol "true" $> Lit (LBool True),
-      symbol "false" $> Lit (LBool False)
-    ]
+    choice
+        [ symbol "true" $> Lit (LBool True)
+        , symbol "false" $> Lit (LBool False)
+        ]
 
 -- parser for if then else expr
 ifThenElse :: Parser RExpr
 ifThenElse =
-  If
-    <$> (symbol "if" *> term)
-    <*> (symbol "then" *> term)
-    <*> (symbol "else" *> term)
+    If
+        <$> (symbol "if" *> term)
+        <*> (symbol "then" *> term)
+        <*> (symbol "else" *> term)
 
 -- parser for top level declarations
 -- form is `let name args... = body`
-letDecl :: Parser Binding
-letDecl = do
-  _ <- symbol "let"
-  name <- identifier
-  args <- many identifier
-  _ <- symbol "="
-  body <- exprs
-  pure (name, foldr Lam body args)
+decl :: Parser Binding
+decl = do
+    name <- (optional $ symbol "let") *> identifier
+    args <- many identifier <* symbol "="
+    body <- exprs
+    traceM $ show body
+    pure (name, foldr Lam body args)
 
-letDecls :: Parser [Binding]
-letDecls = some letDecl
+semi :: Parser Text
+semi = symbol ";"
+
+top :: Parser Binding
+top = decl
+
+tops :: Parser [Binding]
+tops = (top `sepBy1` (symbol "\n" <* sc)) <* eof
 
 data RModule = RModule Text [Binding]
-  deriving (Eq, Show, Ord)
+    deriving (Eq, Show)
 
 raupekaModule :: Parser [Binding]
 -- A module is a list of top level declarations
-raupekaModule = letDecls
+raupekaModule = tops
 
 -- Why does this only capture the first declaration?
 
--- moduleDecl :: Parser Text
--- moduleDecl = do
---   symbol "module"
---   name <- identifier
---   pure $ T.pack name
+moduleDecl :: Parser Text
+moduleDecl = do
+  symbol "module"
+  name <- identifier
+  T.pack <$> identifier
 
--- getModuleName :: RModule -> Text
--- getModuleName (RModule name _) = name
+getModuleName :: RModule -> Text
+getModuleName (RModule name _) = name
 
--- getModuleDecls :: RModule -> [Binding]
--- getModuleDecls (RModule _ decls) = decls
+getModuleDecls :: RModule -> [Binding]
+getModuleDecls (RModule _ decls) = decls
 
 -- | Parse a module
--- parseTopLevel :: Parser RModule
--- parseTopLevel = RModule <$> (moduleDecl <?> "Main") <*> (some letDecl)
+parseTopLevel :: Parser RModule
+parseTopLevel = RModule <$> (moduleDecl <?> "Main") <*> (some decl)
 
 -- -- get bindings from a module
--- getBindings :: RModule -> [Binding]
--- getBindings (RModule _ decls) = decls
+getBindings :: RModule -> [Binding]
+getBindings (RModule _ decls) = decls
 
 -- Import statements
 -- import "file.rpka"
--- pImport :: Parser Text
--- pImport = do
---   symbol "import"
---   file <- between (char '"') (char '"') (manyTill L.charLiteral (char '"'))
---   pure $ T.pack file
+pImport :: Parser Text
+pImport = do
+  symbol "import"
+  file <- between (char '"') (char '"') (manyTill L.charLiteral (char '"'))
+  pure $ T.pack file
 
 -- Import haskell functions (i.e. FFI)
 -- foreign import "Module.function"
--- pForeignImport :: Parser Text
--- pForeignImport = do
---   symbol "foreign"
---   symbol "import"
---   file <- between (char '"') (char '"') (manyTill L.charLiteral (char '"'))
---   pure $ T.pack file
+pForeignImport :: Parser Text
+pForeignImport = do
+  symbol "foreign"
+  symbol "import"
+  file <- between (char '"') (char '"') (manyTill L.charLiteral (char '"'))
+  pure $ T.pack file
 
 parseExprs :: FilePath -> Text -> Either (ParseErrorBundle Text Void) RExpr
 parseExprs = runParser exprs
 
 parseModule :: FilePath -> Text -> Either (ParseErrorBundle Text Void) [Binding]
-parseModule = runParser letDecls
+parseModule = runParser raupekaModule

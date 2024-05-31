@@ -10,7 +10,6 @@ import Language.Raupeka.Compiler.Parser
 import Language.Raupeka.Type.Checker
 import Text.Megaparsec
 import Text.Megaparsec.Char
-import Text.Megaparsec.Char.Lexer qualified as L
 
 conid :: Parser String
 conid = (:) <$> upperChar <*> many alphaNumChar
@@ -35,7 +34,7 @@ tylist = do
   _ <- symbol "[" <* sc
   t <- anyType
   _ <- sc *> symbol "]" <* sc
-  pure $ TypePCon $ PCon "List" [t]
+  pure $ TypePCon "List" [t]
 
 -- | Parses a syntactically special type, e.g. () or the list constructor []
 specialType :: Parser Type
@@ -46,7 +45,7 @@ parameterized :: Parser Type
 parameterized = do
   n <- conid <* sc
   args <- some (tyvar <|> tycon <|> parameterized <|> specialType)
-  pure $ TypePCon $ PCon n args
+  pure $ TypePCon n args
 
 tysig :: Parser (Text, Scheme)
 tysig = do
@@ -95,11 +94,9 @@ allvars :: Parser [TypeVar]
 allvars =
   fmap TV . nub
     <$> ( optional stripcon
-            *> ( some varid
-                   <* optional arrow
-                   <* optional stripcon
-               )
-        )
+          *> (some varid
+               <* optional arrow
+               <* optional stripcon))
 
 tyarr :: Parser Type
 tyarr = do

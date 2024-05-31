@@ -32,6 +32,8 @@ dependencies:
 - lens
 - unix
 - deepseq
+- free
+- deriving-compat
 
 default-extensions:
 - LambdaCase

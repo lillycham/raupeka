@@ -1,27 +1,24 @@
--- Functions can be imported from Haskell using the foreign import keyword.
-foreign import print : String -> ()
 -- Modules can be imported using the import keyword.
+import lang/io.{IO, print, ExitCode};
 
--- Functions and variables are defined with the let keyword
-let greeting = "Hello World!"
+-- Type signatures are optional unless the function is effectful
+greeting : String
+greeting = "Hello World!"
 
--- Syntax is indentation based, but can also be terminated with a semicolon.
-let factorial n = if n == 0 then 1 
-                  else n * factorial (n - 1)
+factorial : Int -> Int
+factorial n = if n == 0 then 1 
+              else n * factorial (n - 1)
 
 -- A function can have multiple arguments.
-let adder x y = x + y
+add : Int -> Int -> Int 
+add x y = x + y
 
 -- Functions w/ multiple arguments can be partially applied.
-let add2 = adder 2
-
--- This is because all functions are reduced to a series of single argument functions.
--- This is called currying.
--- Internally, the adder function is equivalent to:
--- λx -> λy -> x + y
--- and add2 is equivalent to:
--- λy -> 2 + y
--- Lambda expressions can be created w/ the backslash character, or the Greek letter lamda (λ)
+add2 : Int -> Int
+add2 = add 2
 
 -- The main function is called when the program is run.
-let main = print greeting
+-- The bang after the return type are a tuple of effects used by the function.
+-- The main function must have the type Unit ! IO.
+main : Unit ! IO
+main = print greeting
